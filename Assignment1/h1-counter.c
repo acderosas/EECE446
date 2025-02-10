@@ -37,9 +37,7 @@ int main(int argc, char *argv[]) {
     const char *request = "GET /~kkredo/file.html HTTP/1.0\r\n\r\n";
 
     // Command line for getting chunk size
-    if (argc == 2) {
-            host = argv[1];
-    } else {
+    if (argc != 2) {
         fprintf(stderr, "Usage: %s <chunk_size>\n", argv[0]);
         exit(1);
     }
@@ -63,6 +61,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+    //? need to malloc?
     char buf[chunk_size + 1];
     ssize_t bytes_received;
     ssize_t total_bytes = 0;

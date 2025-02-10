@@ -1,18 +1,15 @@
 /* This code is an updated version of the sample code from "Computer Networks: A Systems
  * Approach," 5th Edition by Larry L. Peterson and Bruce S. Davis. Some code comes from
  * man pages, mostly getaddrinfo(3). */
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <sys/types.h> //To get ssize_t
+#include <sys/socket.h> //To get send
 #include <netdb.h>
 #include <string.h>
-#include <unistd.h>
+#include <unistd.h> //To get close
 
-#define SERVER_PORT "5432" // This must match on client and server
-#define BUF_SIZE 256 // This can be smaller. What size?
-
+#define BUF_SIZE 1024
 /*
  * Lookup a host IP address and connect to it using service. Arguments match the first two
  * arguments to getaddrinfo(3).
@@ -22,74 +19,44 @@
  */
 int lookup_and_connect( const char *host, const char *service );
 
-int main( int argc, char *argv[] ) {
-	char *host;
-	char buf[BUF_SIZE];
+int main( ) {
 	int s;
-	int len;
-	uint32_t a, b;
-	uint32_t answer;
+	const char *host = "www.server.com"; //"www.ecst.csuchico.edu"
+	const char *port = "5432"; //80
 
-	if ( argc == 2 ) {
-		host = argv[1];
-	}
-	else {
-		fprintf( stderr, "usage: %s host\n", argv[0] );
-		exit( 1 );
-	}
+	char buf[BUF_SIZE];
+	ssize_t bytes_recieved, total_bytes;
+
 
 	/* Lookup IP and connect to server */
-	if ( ( s = lookup_and_connect( host, SERVER_PORT ) ) < 0 ) {
+	if ( ( s = lookup_and_connect( host, port ) ) < 0 ) {
 		exit( 1 );
 	}
 
-	while(1) {
+	/* Modify the program so it
+	 *
+	 * 1) connects to www.ecst.csuchico.edu on port 80 (mostly done above)
+	 * 2) sends "GET /~kkredo/file.html HTTP/1.0\r\n\r\n" to the server
+	 * 3) receives all the data sent by the server (HINT: "orderly shutdown" in recv(2))
+	 * 4) prints the total number of bytes received
+	 *
+	 * */
 
-		// Get two numbers (a and b) from the user
-
-		// Copy the numbers into a buffer (buf)
-
-		// Send the buffer to the server using the connected socket. Only send the bytes for a and b!
-
-		// Receive the sum from the server into a buffer
-
-		// Copy the sum out of the buffer into a variable (answer)
-
-		// Print the sum
-
-		printf("Enter two numbers:");
-		if(scanf("%u, %u", &a, &b) != 2){
-			fprintf(stderr, "Didn't enter two ints.\n");
-			while (getchar() != "\n");
-			continue;
-		}
-
-		uint32_t net_a = htonl(a);
-		uint32_t net_b = htonl(b);
-
-		memcpy(buf, &net_a, sizeof(net_a));
-        memcpy(buf + sizeof(net_a), &net_b, sizeof(net_b));
-
-		if (send(s, buf, BUF_SIZE, 0) != BUF_SIZE) {
-			perror("send");
-			break;
-		}
-
-		/*
-		if (send(s, buf, BUF_SIZE, 0) != BUF_SIZE) {
-            perror("send");
-            break;
-        }
-
-        if (recv(s, &answer, sizeof(answer), 0) != sizeof(answer)) {
-            perror("recv");
-            break;
-        }
-
-		answer = ntohl(answer);
-		printf("Sum received from server: %u\n", answer);
-		*/
+	if (send(s, REQUEST, strlen(REQUEST),0) < 0){
+		perror("send");
+		close(s);
+		exit(1);
 	}
+
+	while ((bytes_received = recv(s, buf, BUF_SIZE, 0)) > 0) {
+        total_bytes += bytes_received;  
+    }
+
+	if (bytes_received == 0) {
+        printf("Total bytes received: %zd\n", total_bytes);
+    } else {
+        perror("recv");
+    }
 
 	close( s );
 

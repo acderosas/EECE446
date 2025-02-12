@@ -105,8 +105,7 @@ int main(int argc, char *argv[]) {
     */
 
     // HANDLING PARTIAL RECEIVES
-    char buf[chunk_size + 5]; // Extra space for partial tag at the end
-    //char leftover[4] = ""; // Buffer to store partial tag at the end, <h1> is 4 bytes
+    char buf[chunk_size + 1]; // Extra space for partial tag at the end
     size_t leftover_size = 0;
     ssize_t bytes_received;
     ssize_t total_bytes = 0;
@@ -120,9 +119,9 @@ int main(int argc, char *argv[]) {
 
         // Check for partial tag at the end of the buffer
         size_t process_size = current_size;
-        if (process_size >= 4) { // this directly effects Number of <h1> tags: output, anything under 4 will return 0
+        if (process_size >= 0) { // this directly effects Number of <h1> tags: output, anything under 4 will return 0 *******
             process_size -= 3; // Leave 3 bytes at the end to check for partial tag
-        }
+        } 
         
 
         char *tag_position = buf;
@@ -144,7 +143,7 @@ int main(int argc, char *argv[]) {
 
     if (leftover_size > 0) {
         buf[leftover_size] = '\0'; // Null-terminate buffer for string operations
-        char *final_tag = strstr(buf, "<h1>"); 
+        char *final_tag = strstr(buf, "<h1>"); // checks entire buffer but
         if (final_tag != NULL) {
             h1_count++;
         }

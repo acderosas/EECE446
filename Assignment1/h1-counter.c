@@ -55,17 +55,40 @@ int main(int argc, char *argv[]) {
     }
 
     // 2) sends "GET /~kkredo/file.html HTTP/1.0\r\n\r\n" to the server
+    /*
     if (send(s, request, strlen(request), 0) < 0) {
         perror("send");
         close(s);
         exit(1);
     }
+    */
+
+
+    // HANDLING PARTIAL SENDS
+    // initialize total_sent to 0
+    // store request length in request_len
+    // request_len - total_sent tells send() how many bytes are left to send
+    // continue sending until all bytes are sent
+    // request + total_sent points to the next byte to send
+    size_t total_sent = 0;
+    size_t request_len = strlen(request);
+    while (total_sent < request_len) {
+        ssize_t bytes_sent = send(s, request + total_sent, request_len - total_sent, 0);
+        if (bytes_sent < 0) {
+            perror("send");
+            close(s);
+            exit(1);
+        }
+        total_sent += bytes_sent;
+    }
 
     //? need to malloc?
+    /* 
     char buf[chunk_size + 1];
     ssize_t bytes_received;
     ssize_t total_bytes = 0;
     int h1_count = 0;
+    
 
     // 3) receives all the data sent by the server (HINT: "orderly shutdown" in recv(2))
     while ((bytes_received = recv(s, buf, chunk_size, 0)) > 0) {
@@ -79,6 +102,65 @@ int main(int argc, char *argv[]) {
             tag_position += 4; // Move past the found tag
         }
     }
+    */
+
+    // HANDLING PARTIAL RECEIVES
+    char buf[chunk_size + 5]; // Extra space for partial tag at the end
+    //char leftover[4] = ""; // Buffer to store partial tag at the end, <h1> is 4 bytes
+    size_t leftover_size = 0;
+    ssize_t bytes_received;
+    ssize_t total_bytes = 0;
+    int h1_count = 0;
+
+
+    while ((bytes_received = recv(s, buf + leftover_size, chunk_size, 0)) > 0) {
+        total_bytes += bytes_received;
+        size_t current_size = bytes_received + leftover_size;
+        buf[current_size] = '\0'; // Null-terminate buffer for string operations
+
+        // Check for partial tag at the end of the buffer
+        size_t process_size = current_size;
+        if (process_size >= 4) { // this directly effects Number of <h1> tags: output, anything under 4 will return 0
+            process_size -= 3; // Leave 3 bytes at the end to check for partial tag
+        }
+        
+
+        char *tag_position = buf;
+        while ((tag_position = strstr(tag_position, "<h1>")) != NULL) { //Using strstr() to get first occurence
+            if (tag_position - buf < process_size) {
+                h1_count++;
+                tag_position += 4; // Move past the found tag
+            } else {
+                break;
+            }
+        }
+
+        // Check for partial tag at the end of the buffer
+        leftover_size = current_size - process_size; 
+        if (leftover_size > 0) {
+            memmove(buf, buf + process_size, leftover_size);
+        }
+    }
+
+    if (leftover_size > 0) {
+        buf[leftover_size] = '\0'; // Null-terminate buffer for string operations
+        char *final_tag = strstr(buf, "<h1>"); 
+        if (final_tag != NULL) {
+            h1_count++;
+        }
+    }
+
+
+    // 3) receives all the data sent by the server
+    // add leftover_size to chunk_size to make sure there's enough space for next chunk
+    /*
+    while((bytes_received = recv(s, buf + leftover_size, chunk_size, 0)) > 0)
+    {
+        total_bytes += bytes_received;
+        size_t current_size = bytes_received + leftover_size;
+        buf[current_size] = '\0'; // Null-terminate buffer for string operations
+    }
+    */
 
     // 4) prints the total number of bytes received
     if (bytes_received == 0) {

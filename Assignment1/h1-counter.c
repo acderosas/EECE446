@@ -114,40 +114,16 @@ int main(int argc, char *argv[]) {
 
     while ((bytes_received = recv(s, buf + leftover_size, chunk_size, 0)) > 0) {
         total_bytes += bytes_received;
-        size_t current_size = bytes_received + leftover_size;
-        buf[current_size] = '\0'; // Null-terminate buffer for string operations
-
-        // Check for partial tag at the end of the buffer
-        size_t process_size = current_size;
-        if (process_size >= 0) { // this directly effects Number of <h1> tags: output, anything under 4 will return 0 *******
-            process_size -= 3; // Leave 3 bytes at the end to check for partial tag
-        } 
+        buf[bytes_received] = '\0'; // Null-terminate buffer for string operations
         
 
         char *tag_position = buf;
         while ((tag_position = strstr(tag_position, "<h1>")) != NULL) { //Using strstr() to get first occurence
-            if (tag_position - buf < process_size) {
                 h1_count++;
                 tag_position += 4; // Move past the found tag
-            } else {
-                break;
-            }
-        }
-
-        // Check for partial tag at the end of the buffer
-        leftover_size = current_size - process_size; 
-        if (leftover_size > 0) {
-            memmove(buf, buf + process_size, leftover_size);
         }
     }
 
-    if (leftover_size > 0) {
-        buf[leftover_size] = '\0'; // Null-terminate buffer for string operations
-        char *final_tag = strstr(buf, "<h1>"); // checks entire buffer but
-        if (final_tag != NULL) {
-            h1_count++;
-        }
-    }
 
 
     // 3) receives all the data sent by the server
@@ -172,7 +148,7 @@ int main(int argc, char *argv[]) {
 	close( s );
 
 	return 0;
-}
+};
 
 
 // Same as the starter code

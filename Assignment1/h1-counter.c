@@ -70,7 +70,8 @@ int main(int argc, char *argv[]) {
     // request_len - total_sent tells send() how many bytes are left to send
     // continue sending until all bytes are sent
     // request + total_sent points to the next byte to send
-    // https://stackoverflow.com/questions/35485438/partial-send-receive-tcp-sockets-c
+    // https://cboard.cprogramming.com/networking-device-communication/51385-handling-partial-send-s.html
+
     size_t total_sent = 0;
     size_t request_len = strlen(request);
     while (total_sent < request_len) {

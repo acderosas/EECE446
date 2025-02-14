@@ -85,59 +85,27 @@ int main(int argc, char *argv[]) {
     }
 
     //? need to malloc?
-    /* 
-    char buf[chunk_size + 1];
-    ssize_t bytes_received;
-    ssize_t total_bytes = 0;
-    int h1_count = 0;
-    
-
-    // 3) receives all the data sent by the server (HINT: "orderly shutdown" in recv(2))
-    while ((bytes_received = recv(s, buf, chunk_size, 0)) > 0) {
-        total_bytes += bytes_received;
-        buf[bytes_received] = '\0'; // Null-terminate buffer for string operations
-
-        // Count <h1> tags for given chunk with a pointer to be used for strstr
-        char *tag_position = buf;
-        while ((tag_position = strstr(tag_position, "<h1>")) != NULL) { //Using strstr() to get first occurence
-            h1_count++;
-            tag_position += 4; // Move past the found tag
-        }
-    }
-    */
-
     // HANDLING PARTIAL RECEIVES
     char buf[chunk_size + 1]; // Extra space for partial tag at the end
-    size_t leftover_size = 0;
     ssize_t bytes_received;
     ssize_t total_bytes = 0;
     int h1_count = 0;
 
+    
 
-    while ((bytes_received = recv(s, buf + leftover_size, chunk_size, 0)) > 0) {
+    while ((bytes_received = recv(s, buf, chunk_size, 0)) > 0) {
         total_bytes += bytes_received;
         buf[bytes_received] = '\0'; // Null-terminate buffer for string operations
         
 
+        if(bytes_received == chunk_size) {
         char *tag_position = buf;
-        while ((tag_position = strstr(tag_position, "<h1>")) != NULL) { //Using strstr() to get first occurence
-                h1_count++;
-                tag_position += 4; // Move past the found tag
+            while ((tag_position = strstr(tag_position, "<h1>")) != NULL) { //Using strstr() to get first occurence
+                    h1_count++;
+                    tag_position += 4; // Move past the found tag
+            }
         }
     }
-
-
-
-    // 3) receives all the data sent by the server
-    // add leftover_size to chunk_size to make sure there's enough space for next chunk
-    /*
-    while((bytes_received = recv(s, buf + leftover_size, chunk_size, 0)) > 0)
-    {
-        total_bytes += bytes_received;
-        size_t current_size = bytes_received + leftover_size;
-        buf[current_size] = '\0'; // Null-terminate buffer for string operations
-    }
-    */
 
     // 4) prints the total number of bytes received
     if (bytes_received == 0) {

@@ -10,12 +10,14 @@
 
 // Using the starter code from lab and for lec for this assignment
 
+#define _GNU_SOURCE //For memmem
+#include <string.h> //FOr memmem
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h> //To get ssize_t
 #include <sys/socket.h> //To get send
 #include <netdb.h>
-#include <string.h>
 #include <unistd.h> //To get close
 
 #define MAX_CHUNK_SIZE 1000
@@ -28,6 +30,12 @@
  * the returned socket.
  */
 int lookup_and_connect( const char *host, const char *service );
+
+//From the book
+int sendall(int s, const char *buf, int *len);
+
+//With a sendall comes a recvall
+int recvall(int s, char *buf, int chunk_size, ssize_t *total_received);
 
 // For c command line, argc is the number of arguements entered by the user while argv actually goes about indexing those values
 int main(int argc, char *argv[]) {
@@ -55,55 +63,29 @@ int main(int argc, char *argv[]) {
     }
 
     // 2) sends "GET /~kkredo/file.html HTTP/1.0\r\n\r\n" to the server
-    /*
-    if (send(s, request, strlen(request), 0) < 0) {
-        perror("send");
+    int request_len = strlen(request);
+    if (sendall(s, request, &request_len) == -1) {
+        perror("sendall");
         close(s);
         exit(1);
     }
-    */
-
-
-    // HANDLING PARTIAL SENDS
-    // initialize total_sent to 0
-    // store request length in request_len
-    // request_len - total_sent tells send() how many bytes are left to send
-    // continue sending until all bytes are sent
-    // request + total_sent points to the next byte to send
-    // https://cboard.cprogramming.com/networking-device-communication/51385-handling-partial-send-s.html
-
-    size_t total_sent = 0;
-    size_t request_len = strlen(request);
-    while (total_sent < request_len) {
-        ssize_t bytes_sent = send(s, request + total_sent, request_len - total_sent, 0);
-        if (bytes_sent < 0) {
-            perror("send");
-            close(s);
-            exit(1);
-        }
-        total_sent += bytes_sent;
-    }
 
     //? need to malloc?
-    // HANDLING PARTIAL RECEIVES
-    char buf[chunk_size + 1]; // Extra space for partial tag at the end
+    char buf[chunk_size];
     ssize_t bytes_received;
     ssize_t total_bytes = 0;
     int h1_count = 0;
 
-    
-
-    while ((bytes_received = recv(s, buf, chunk_size, 0)) > 0) {
+    // 3) receives all the data sent by the server (HINT: "orderly shutdown" in recv(2))
+    while (recvall(s, buf, chunk_size, &bytes_received) == 0 && bytes_received > 0) {
         total_bytes += bytes_received;
-        buf[bytes_received] = '\0'; // Null-terminate buffer for string operations
-        
 
-        if(bytes_received == chunk_size) {
-        char *tag_position = buf;
-            while ((tag_position = strstr(tag_position, "<h1>")) != NULL) { //Using strstr() to get first occurence
-                    h1_count++;
-                    tag_position += 4; // Move past the found tag
-            }
+        // Count <h1> tags for given chunk with a pointer to be used for strstr
+        void *tag_position = buf;
+        //Cannot assume null termination with strstr()
+        while ((tag_position = memmem(tag_position, bytes_received - ((char *)tag_position - buf), "<h1>", 4)) != NULL) {
+            h1_count++;
+            tag_position = (char *)tag_position + 4; // Move past the found tag
         }
     }
 
@@ -118,7 +100,7 @@ int main(int argc, char *argv[]) {
 	close( s );
 
 	return 0;
-};
+}
 
 
 // Same as the starter code
@@ -158,4 +140,43 @@ int lookup_and_connect( const char *host, const char *service ) {
 	freeaddrinfo( result );
 
 	return s;
+}
+
+
+int sendall(int s, const char *buf, int *len)
+{
+    int total = 0;        // how many bytes we've sent
+    int bytesleft = *len; // how many we have left to send
+    int n;
+
+    while(total < *len) {
+        n = send(s, buf+total, bytesleft, 0);
+        if (n == -1) { break; }
+        total += n;
+        bytesleft -= n;
+    }
+
+    *len = total; // return number actually sent here
+
+    return n==-1?-1:0; // return -1 on failure, 0 on success
+} 
+
+int recvall(int s, char *buf, int chunk_size, ssize_t *total_received) {
+    ssize_t bytes_received;
+    ssize_t total = 0;
+
+    while (total < chunk_size) {
+        bytes_received = recv(s, buf + total, chunk_size - total, 0);
+        if (bytes_received == 0) {
+            break; // Connection closed
+        }
+        if (bytes_received < 0) {
+            perror("recv failed");
+            return -1; // Error
+        }
+        total += bytes_received;
+    }
+
+    *total_received = total;
+    return 0;
 }

@@ -23,6 +23,8 @@
 #include <vector>
 #include <cstring>
 
+using namespace std;
+
 // functions
 int lookup_and_connect(const char* host, const char* service);
 
@@ -38,15 +40,15 @@ private:
     static const uint8_t PUBLISH_ACTION = 1;
     static const uint8_t SEARCH_ACTION = 2;
 
-    bool connectToRegistry(const std::string& host, uint16_t port);
+    bool connectToRegistry(const string& host, uint16_t port);
 
-    std::vector<std::string> getSharedFiles();
+    vector<string> getSharedFiles();
 
     bool sendJoinRequest();
 
     bool sendPublishRequest();
 
-    bool sendSearchRequest(const std::string& filename);
+    bool sendSearchRequest(const string& filename);
 
     bool receiveSearchResponse();
 
@@ -55,7 +57,7 @@ public:
 
     ~P2PPeer();
 
-    bool initialize(const std::string& reg_host, uint16_t reg_port);
+    bool initialize(const string& reg_host, uint16_t reg_port);
 
     void commandLoop();
 };
@@ -118,20 +120,20 @@ P2PPeer::~P2PPeer() {
 
 
 // initialize peer and connect to registry
-bool P2PPeer::initialize(const std::string& reg_host, uint16_t reg_port) {
+bool P2PPeer::initialize(const string& reg_host, uint16_t reg_port) {
     return false;
 }
 
 
 // connect to registry using lookup_and_connect
-bool P2PPeer::connectToRegistry(const std::string& host, uint16_t port) {
+bool P2PPeer::connectToRegistry(const string& host, uint16_t port) {
     return false;
 }
 
 
 // get list of files from SharedFiles directory
-std::vector<std::string> P2PPeer::getSharedFiles() {
-    return std::vector<std::string>();
+vector<string> P2PPeer::getSharedFiles() {
+    return vector<string>();
 }
 
 
@@ -148,7 +150,7 @@ bool P2PPeer::sendPublishRequest() {
 
 
  // send SEARCH request
-bool P2PPeer::sendSearchRequest(const std::string& filename) {
+bool P2PPeer::sendSearchRequest(const string& filename) {
     return false;
 }
 

@@ -6,70 +6,57 @@
 
 #define _GNU_SOURCE 
 
-// including every library I found cuz why not
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> 
-#include <iostream>
-#include <string>
-#include <cstdint>
+#include <string.h>
+#include <stdint.h>
 #include <sys/socket.h>
-#include <sys/socket.h> 
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <filesystem>
-#include <vector>
-#include <cstring>
+#include <dirent.h>
 
-using namespace std;
+// Constants for request types
+// Got from PDF
+#define JOIN_ACTION 0
+#define PUBLISH_ACTION 1
+#define SEARCH_ACTION 2
 
-// functions
-int lookup_and_connect(const char* host, const char* service);
-
-class P2PPeer {
-private:
+// Structure to represent a P2P peer
+typedef struct {
     int sock_fd;
     uint32_t peer_id;
-    
-    // got this from the pdf
-    // These values must be sent as the first byte of each request
-    // to tell the registry what type of action you're performing
-    static const uint8_t JOIN_ACTION = 0;
-    static const uint8_t PUBLISH_ACTION = 1;
-    static const uint8_t SEARCH_ACTION = 2;
+} P2PPeer;
 
-    bool connectToRegistry(const string& host, uint16_t port);
+// Function declarations
+int lookup_and_connect(const char* host, const char* service);
 
-    vector<string> getSharedFiles();
+int connect_to_registry(P2PPeer* peer, const char* host, uint16_t port);
 
-    bool sendJoinRequest();
+char** get_shared_files(int* num_files);
 
-    bool sendPublishRequest();
+int send_join_request(P2PPeer* peer);
 
-    bool sendSearchRequest(const string& filename);
+int send_publish_request(P2PPeer* peer);
 
-    bool receiveSearchResponse();
+int send_search_request(P2PPeer* peer, const char* filename);
 
-public:
-    P2PPeer(uint32_t id);
+int receive_search_response(P2PPeer* peer);
 
-    ~P2PPeer();
+int initialize_peer(P2PPeer* peer, uint32_t id, const char* reg_host, uint16_t reg_port);
 
-    bool initialize(const string& reg_host, uint16_t reg_port);
+void command_loop(P2PPeer* peer);
 
-    void commandLoop();
-};
+void cleanup_peer(P2PPeer* peer);
 
 int main(int argc, char* argv[]) {
-
     // Parse arguments and create peer
-
+    
     return 0;
 }
 
-// Function definitions
+// Function definitions - keeping lookup_and_connect exactly as provided
 int lookup_and_connect(const char* host, const char* service) {
     struct addrinfo hints;
     struct addrinfo *rp, *result;
@@ -108,67 +95,45 @@ int lookup_and_connect(const char* host, const char* service) {
     return s;
 }
 
-
-// initialize member variables
-P2PPeer::P2PPeer(uint32_t id) {
+// Initialize peer
+int initialize_peer(P2PPeer* peer, uint32_t id, const char* reg_host, uint16_t reg_port) {
+    return 0;
 }
 
-
-// clean stuff up
-P2PPeer::~P2PPeer() {
+// Connect to registry using lookup_and_connect
+int connect_to_registry(P2PPeer* peer, const char* host, uint16_t port) {
+    return 0;
 }
 
-
-// initialize peer and connect to registry
-bool P2PPeer::initialize(const string& reg_host, uint16_t reg_port) {
-    return false;
+// Get list of files from SharedFiles directory
+char** get_shared_files(int* num_files) {
+    return NULL;
 }
 
-
-// connect to registry using lookup_and_connect
-bool P2PPeer::connectToRegistry(const string& host, uint16_t port) {
-    return false;
+// Send JOIN request
+int send_join_request(P2PPeer* peer) {
+    return 0;
 }
 
-
-// get list of files from SharedFiles directory
-vector<string> P2PPeer::getSharedFiles() {
-    return vector<string>();
+// Send PUBLISH request
+int send_publish_request(P2PPeer* peer) {
+    return 0;
 }
 
-
-// send JOIN request
-bool P2PPeer::sendJoinRequest() {
-    return false;
+// Send SEARCH request
+int send_search_request(P2PPeer* peer, const char* filename) {
+    return 0;
 }
 
-
-// send PUBLISH request
-bool P2PPeer::sendPublishRequest() {
-    return false;
+// Receive and handle SEARCH response
+int receive_search_response(P2PPeer* peer) {
+    return 0;
 }
 
-
- // send SEARCH request
-bool P2PPeer::sendSearchRequest(const string& filename) {
-    return false;
+// Command loop to handle user interaction
+void command_loop(P2PPeer* peer) {
 }
 
-
-// receive and handle SEARCH response
-bool P2PPeer::receiveSearchResponse() {
-    return false;
+// Clean up resources
+void cleanup_peer(P2PPeer* peer) {
 }
-
-
-// make command loop to handle user interaction
-// send JOIN request
-// send PUBLISH request (registry)
-// asks user for a filename
-// send SEARCH request
-// hopefully displays message or data
-void P2PPeer::commandLoop() {
-}
-
-
-// maybe another thing idk

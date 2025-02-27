@@ -50,11 +50,13 @@ void command_loop(P2PPeer* peer);
 
 void cleanup_peer(P2PPeer* peer);
 
+
 int main(int argc, char* argv[]) {
     // Parse arguments and create peer
     
     return 0;
 }
+
 
 // Function definitions 
 

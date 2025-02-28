@@ -47,9 +47,10 @@ int lookup_and_connect(const char* host, const char* service);
 
 
 int main(int argc, char* argv[]) {
-    // Parse arguments and create peer
+    int s;
+    const char *host;
+    const char *port;
     
-    return 0;
 }
 
 
@@ -64,7 +65,7 @@ void sendSearch(int s) {
 }
 
 void sendPublish(int s) {
-
+    
 }
 
 int sendall(int s, const char *buf, int *len) {

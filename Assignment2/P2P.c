@@ -30,25 +30,20 @@ typedef struct {
 } P2PPeer;
 
 // Function declarations
+
+void sendJoin(int s, int id);
+
+void sendSearch(int s);
+
+void sendPublish(int s);
+
+int sendall(int s, const char *buf, int *len);
+
+int recvall(int s, char *buf, int chunk_size, ssize_t *total_received);
+
 int lookup_and_connect(const char* host, const char* service);
 
-int connect_to_registry(P2PPeer* peer, const char* host, uint16_t port);
 
-char** get_shared_files(int* num_files);
-
-int send_join_request(P2PPeer* peer);
-
-int send_publish_request(P2PPeer* peer);
-
-int send_search_request(P2PPeer* peer, const char* filename);
-
-int receive_search_response(P2PPeer* peer);
-
-int initialize_peer(P2PPeer* peer, uint32_t id, const char* reg_host, uint16_t reg_port);
-
-void command_loop(P2PPeer* peer);
-
-void cleanup_peer(P2PPeer* peer);
 
 
 int main(int argc, char* argv[]) {
@@ -60,48 +55,56 @@ int main(int argc, char* argv[]) {
 
 // Function definitions 
 
-// Initialize peer
-int initialize_peer(P2PPeer* peer, uint32_t id, const char* reg_host, uint16_t reg_port) {
+void sendJoin(int s, int id) {
+
+}
+
+void sendSearch(int s) {
+
+}
+
+void sendPublish(int s) {
+
+}
+
+int sendall(int s, const char *buf, int *len) {
+    int total = 0;        // how many bytes we've sent
+    int bytesleft = *len; // how many we have left to send
+    int n;
+
+    while(total < *len) {
+        n = send(s, buf+total, bytesleft, 0);
+        if (n == -1) { break; }
+        total += n;
+        bytesleft -= n;
+    }
+
+    *len = total; // return number actually sent here
+
+    return n==-1?-1:0; // return -1 on failure, 0 on success
+} 
+
+
+int recvall(int s, char *buf, int chunk_size, ssize_t *total_received) {
+    ssize_t bytes_received;
+    ssize_t total = 0;
+
+    while (total < chunk_size) {
+        bytes_received = recv(s, buf + total, chunk_size - total, 0);
+        if (bytes_received == 0) {
+            break; // Connection closed
+        }
+        if (bytes_received < 0) {
+            perror("recv failed");
+            return -1; // Error
+        }
+        total += bytes_received;
+    }
+
+    *total_received = total;
     return 0;
 }
 
-// Connect to registry using lookup_and_connect
-int connect_to_registry(P2PPeer* peer, const char* host, uint16_t port) {
-    return 0;
-}
-
-// Get list of files from SharedFiles directory
-char** get_shared_files(int* num_files) {
-    return NULL;
-}
-
-// Send JOIN request
-int send_join_request(P2PPeer* peer) {
-    return 0;
-}
-
-// Send PUBLISH request
-int send_publish_request(P2PPeer* peer) {
-    return 0;
-}
-
-// Send SEARCH request
-int send_search_request(P2PPeer* peer, const char* filename) {
-    return 0;
-}
-
-// Receive and handle SEARCH response
-int receive_search_response(P2PPeer* peer) {
-    return 0;
-}
-
-// Command loop to handle user interaction
-void command_loop(P2PPeer* peer) {
-}
-
-// Clean up resources
-void cleanup_peer(P2PPeer* peer) {
-}
 
 int lookup_and_connect(const char* host, const char* service) {
     struct addrinfo hints;

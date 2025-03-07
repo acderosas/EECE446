@@ -1,3 +1,9 @@
+# EECE 446
+# Spring 2025
+# Assignment 1
+# Jake Baartman
+# Andre de Rosas
+
 EXE = h1-counter
 CFLAGS = -Wall
 CXXFLAGS = -Wall
@@ -10,8 +16,8 @@ all: $(EXE)
 
 # Implicit rules defined by Make, but you can redefine if needed
 #
-#h1-counter: h1-counter.c
-#	$(CC) $(CFLAGS) h1-counter.c $(LDLIBS) -o h1-counter
+h1-counter: h1-counter.c
+	$(CC) $(CFLAGS) h1-counter.c $(LDLIBS) -o h1-counter
 #
 # OR
 #

@@ -264,11 +264,63 @@ int publish_request(int socket_fd) {
     return result;
 }
 
+// lookup_and_connect from program 1
+int lookup_and_connect(const char* host, const char* service) {
+    struct addrinfo hints;
+    struct addrinfo *rp, *result;
+    int s;
+
+    /* Translate host name into peer's IP address */
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = 0;
+    hints.ai_protocol = 0;
+
+    if ((s = getaddrinfo(host, service, &hints, &result)) != 0) {
+        fprintf(stderr, "stream-talk-client: getaddrinfo: %s\n", gai_strerror(s));
+        return -1;
+    }
+
+    /* Iterate through the address list and try to connect */
+    for (rp = result; rp != NULL; rp = rp->ai_next) {
+        if ((s = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol)) == -1) {
+            continue;
+        }
+
+        if (connect(s, rp->ai_addr, rp->ai_addrlen) != -1) {
+            break;
+        }
+
+        close(s);
+    }
+    if (rp == NULL) {
+        perror("stream-talk-client: connect");
+        return -1;
+    }
+    freeaddrinfo(result);
+
+    return s;
+}
+
 int fetch_request(const char *registry_host, const char *registry_port, uint32_t peer_id, const char *filename) {
-    // Step 1: Connect to registry and search for file
+    // Step 1: Connect to registry for search
     int registry_socket = lookup_and_connect(registry_host, registry_port);
     if (registry_socket < 0) {
         fprintf(stderr, "Failed to connect to registry for FETCH operation\n");
+        return -1;
+    }
+    
+    // JOIN the registry first
+    unsigned char join_packet[5];
+    join_packet[0] = ACTION_JOIN;
+    uint32_t network_id = htonl(peer_id);
+    memcpy(join_packet + 1, &network_id, 4);
+    
+    int join_len = 5;
+    if (sendall(registry_socket, (const char *)join_packet, &join_len) < 0) {
+        fprintf(stderr, "Failed to send JOIN request to registry\n");
+        close(registry_socket);
         return -1;
     }
     
@@ -429,45 +481,6 @@ int fetch_request(const char *registry_host, const char *registry_port, uint32_t
     
     printf("File '%s' successfully downloaded (%zu bytes)\n", filename, total_bytes);
     return 0;
-}
-
-// lookup_and_connect from program 1
-int lookup_and_connect(const char* host, const char* service) {
-    struct addrinfo hints;
-    struct addrinfo *rp, *result;
-    int s;
-
-    /* Translate host name into peer's IP address */
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = 0;
-    hints.ai_protocol = 0;
-
-    if ((s = getaddrinfo(host, service, &hints, &result)) != 0) {
-        fprintf(stderr, "stream-talk-client: getaddrinfo: %s\n", gai_strerror(s));
-        return -1;
-    }
-
-    /* Iterate through the address list and try to connect */
-    for (rp = result; rp != NULL; rp = rp->ai_next) {
-        if ((s = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol)) == -1) {
-            continue;
-        }
-
-        if (connect(s, rp->ai_addr, rp->ai_addrlen) != -1) {
-            break;
-        }
-
-        close(s);
-    }
-    if (rp == NULL) {
-        perror("stream-talk-client: connect");
-        return -1;
-    }
-    freeaddrinfo(result);
-
-    return s;
 }
 
 int main(int argc, char *argv[]) {

@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -g
 TARGET = peer
-SRCS = P2P.c
+SRCS = P2PDownload.c
 
 all: $(TARGET)
 
